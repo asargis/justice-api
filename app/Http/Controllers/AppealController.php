@@ -8,6 +8,7 @@ use App\Models\Appeal;
 use App\Models\Applicant;
 use App\Models\Document;
 use App\Models\Participant;
+use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -17,6 +18,7 @@ class AppealController extends Controller
 {
     public function create(Request $request): JsonResource
     {
+        $params = $request->all();
         $esiaLogin = $request->post('esia_login') ?? null;
         $esiaPassword = $request->post('esia_password') ?? null;
         $selemiumUrl = $request->post('selenium_url') ?? null;
@@ -111,6 +113,37 @@ class AppealController extends Controller
             'message' => 'Отсутствует appeal_id',
             'code' => 400
         ]);
+    }
+
+    public function createAppeal(Request $request)
+    {
+        $params = [];
+        foreach ($request->all() as $key => $value) {
+            if (gettype($value) == 'string') {
+                $params['multipart'][] = [
+                    'name' => $key,
+                    'contents' => $value
+                ];
+            } else if(gettype($value) == 'array') {
+                foreach ($value as $k =>  $file) {
+                    $params['multipart'][] = [
+                        'name' => $key . '[]',
+                        'contents' => fopen($file->getPathname(), 'r'),
+                        'filename' => $file->getClientOriginalName()
+                    ];
+                }
+            }
+        }
+
+        $client = new Client();
+        $res = $client->request(
+            'POST',
+            'http://justice.loc/api/appeal',
+            $params,
+
+        );
+
+        return $res->getBody();
     }
 
     private function storeDocuments($files, $type, $appealId)

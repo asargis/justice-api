@@ -22,3 +22,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::post('appeal', [AppealController::class, 'create']);
 Route::get('appeal', [AppealController::class, 'get']);
+
+Route::post('appeal/create', [AppealController::class, 'createAppeal']);
+

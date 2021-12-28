@@ -8,6 +8,7 @@ use App\Models\Appeal;
 use App\Models\Applicant;
 use App\Models\Document;
 use App\Models\Participant;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -77,6 +78,10 @@ class AppealController extends Controller
                 }
 
                 ProcessAppeal::dispatch($appeal);
+
+                return new JsonResource([
+                    'appeal_id' => $appeal->id,
+                ]);
             }
 
         } catch (\Throwable $exception) {
@@ -85,10 +90,26 @@ class AppealController extends Controller
                 'code' => 422,
             ]);
         }
+    }
 
+    public function get(Request $request): JsonResponse
+    {
+        $appealId = $request->get('appeal_id');
+        if (isset($appealId) && !empty($appealId)) {
+            try {
+                $appeal = Appeal::findOrFail(['id' => $appealId]);
+                return new JsonResponse($appeal);
+            } catch (\Throwable $exception) {
+                return new JsonResponse([
+                    'message' => $exception->getMessage(),
+                    'code' => 422
+                ]);
+            }
+        }
 
-        return new JsonResource([
-            'message' => 'ok...',
+        return new JsonResponse([
+            'message' => 'Отсутствует appeal_id',
+            'code' => 400
         ]);
     }
 

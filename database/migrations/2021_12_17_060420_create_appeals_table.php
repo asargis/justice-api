@@ -15,6 +15,7 @@ class CreateAppealsTable extends Migration
     {
         Schema::create('appeals', function (Blueprint $table) {
             $table->id();
+            $table->string('external_id')->nullable();
             $table->string('esia_login');
             $table->string('esia_password');
             $table->string('selenium_url');

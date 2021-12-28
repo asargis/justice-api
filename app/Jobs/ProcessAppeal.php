@@ -220,14 +220,19 @@ class ProcessAppeal implements ShouldQueue
                 WebDriverBy::xpath('//button[contains(text(), "Отправить")]')
             )->click();
 
-            $driver->quit();
+
+            $appealId = $driver->findElement(
+                WebDriverBy::xpath('//label[contains(text(), "Номер")]/following::div[1]/div')
+            )->getText();
 
             $this->appeal->status = Appeal::STATUS_PROCESSED;
+            $this->appeal->external_id = $appealId;
             $this->appeal->save();
+
+            $driver->quit();
         } catch (\Throwable $exception) {
             $this->appeal->status = Appeal::STATUS_FAILED;
             $this->appeal->save();
-            echo $exception->getMessage();
             $this->release(10);
             $driver->quit();
         }

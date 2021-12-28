@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\AppealRequest;
 use App\Jobs\ProcessAppeal;
 use App\Models\Appeal;
 use App\Models\Applicant;
@@ -18,7 +17,6 @@ class AppealController extends Controller
 {
     public function create(Request $request): JsonResource
     {
-        $params = $request->all();
         $esiaLogin = $request->post('esia_login') ?? null;
         $esiaPassword = $request->post('esia_password') ?? null;
         $selemiumUrl = $request->post('selenium_url') ?? null;
@@ -115,17 +113,34 @@ class AppealController extends Controller
         ]);
     }
 
-    public function createAppeal(Request $request)
+    public function createAppeal(
+        string $esia_login = '',
+        string $esia_password = '',
+        string $selemium_url = '',
+        string $appeal_type = '',
+        string $birthplace = '',
+        string $court_region = '',
+        string $court_judiciary = '',
+        string $applicants = '',
+        string $participants = '',
+        array  $proxy_files = [],
+        array  $essence_files = [],
+        array  $attachment_files = [],
+        array  $payment_files = []
+    )
     {
-        $params = [];
-        foreach ($request->all() as $key => $value) {
+
+        $args = get_defined_vars();
+        $params['multipart'] = [];
+
+        foreach ($args as $key => $value) {
             if (gettype($value) == 'string') {
                 $params['multipart'][] = [
                     'name' => $key,
                     'contents' => $value
                 ];
-            } else if(gettype($value) == 'array') {
-                foreach ($value as $k =>  $file) {
+            } else if (gettype($value) == 'array') {
+                foreach ($value as $k => $file) {
                     $params['multipart'][] = [
                         'name' => $key . '[]',
                         'contents' => fopen($file->getPathname(), 'r'),
@@ -138,7 +153,7 @@ class AppealController extends Controller
         $client = new Client();
         $res = $client->request(
             'POST',
-            'http://justice.loc/api/appeal',
+            'http://justice.loc/api/appeal?XDEBUG_SESSION_START=PHPSTORM',
             $params,
 
         );

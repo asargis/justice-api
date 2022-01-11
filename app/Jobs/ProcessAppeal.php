@@ -48,8 +48,7 @@ class ProcessAppeal implements ShouldQueue
      */
     public function handle()
     {
-        $this->appeal->status = Appeal::STATUS_PROCESSING;
-        $this->appeal->save();
+
 
         $serverUrl = $this->appeal->selenium_url;
         $desiredCapabilities = DesiredCapabilities::chrome();
@@ -62,7 +61,7 @@ class ProcessAppeal implements ShouldQueue
         $driver->manage()->window()->setSize(new WebDriverDimension(1920, 1080));
         $driver->manage()->window()->setPosition(new WebDriverPoint(2, 2));
 
-        try {
+        //try {
             $driver->get("https://ej.sudrf.ru/");
 
             $driver->manage()->timeouts()->implicitlyWait(5);
@@ -103,7 +102,14 @@ class ProcessAppeal implements ShouldQueue
                 WebDriverBy::cssSelector('#loginByPwdButton')
             )->click();
             sleep(1);
+            try {
+                $driver->findElement(
+                    WebDriverBy::xpath('//span[contains(text(), "Частное лицо")]')
+                )->click();
+                sleep(1);
+            } catch (\Throwable $exception) {
 
+            }
             $navBarMenu = $driver->findElement(
                 WebDriverBy::xpath('//a[contains(@href, "/appeal/")]')
             );
@@ -230,12 +236,12 @@ class ProcessAppeal implements ShouldQueue
             $this->appeal->save();
 
             $driver->quit();
-        } catch (\Throwable $exception) {
-            $this->appeal->status = Appeal::STATUS_FAILED;
-            $this->appeal->save();
-            $this->release(10);
-            $driver->quit();
-        }
+//        } catch (\Throwable $exception) {
+//            $this->appeal->status = Appeal::STATUS_FAILED;
+//            $this->appeal->save();
+//            $this->release(10);
+//            $driver->quit();
+//        }
     }
 
 
@@ -289,9 +295,9 @@ class ProcessAppeal implements ShouldQueue
                 WebDriverBy::xpath('//input[contains(@title, "Введите адрес электронной почты представляемого лица")]')
             )->sendKeys($applicant->email);
             sleep(1);
-
+         //   dd();
             $driver->findElement(
-                WebDriverBy::xpath('//input[contains(@title, "Введите адрес электронной почты представляемого лица")]')
+                WebDriverBy::xpath('//input[contains(@title, "Введите номер телефона представляемого лица")]')
             )->sendKeys($applicant->phone);
             sleep(1);
 

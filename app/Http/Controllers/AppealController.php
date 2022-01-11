@@ -77,7 +77,10 @@ class AppealController extends Controller
                     $this->storeDocuments($paymentFiles, Document::TYPE_PAYMENT, $appeal->id);
                 }
 
-                ProcessAppeal::dispatch($appeal);
+                $appeal->status = Appeal::STATUS_PROCESSING;
+                $appeal->save();
+                $job = (new ProcessAppeal($appeal));
+                dispatch($job);
 
                 return new JsonResource([
                     'appeal_id' => $appeal->id,
@@ -181,10 +184,25 @@ class AppealController extends Controller
         }
     }
 
-    private function getDocumentPagesCount($document): int
+    private function getDocumentPagesCount($filename): int
     {
-        $im = new \Imagick();
-        $im->pingImage($document);
-        return $im->getNumberImages();
+        $count = 0;
+        $fp = fopen($filename, 'r');
+        if ($fp) {
+            $count = 0;
+            while (!feof($fp)) {
+                $line = fgets($fp, 255);
+                if (preg_match('|/Count [0-9]+|', $line, $matches)) {
+                    preg_match('|[0-9]+|', $matches[0], $matches2);
+                    if ($count < $matches2[0]) {
+                        $count = trim($matches2[0]);
+                    }
+                }
+            }
+            fclose($fp);
+        }
+
+
+        return $count;
     }
 }

@@ -140,11 +140,16 @@ class TestSelenium extends Command
 
             $this->fillApplicantsData($driver, [
                 'name' => 'ООО Правеж',
-                'inn' => '8888888888',
+                'inn' => '888345345345',
                 'legal_zipcode' => '654000',
                 'legal_address' => 'пр. Советской Армии 33',
                 'location_zipcode' => '654000',
                 'location_address' => 'ул. Тореза 10',
+                'procedural_status' => 'Истец',
+                'ogrn' => '3453645567674',
+                'kpp' => '345646456',
+                'email' => 'johndoe@mail.ru',
+                'phone' => '+79998887766'
             ]);
 
             $participants = [
@@ -228,6 +233,20 @@ class TestSelenium extends Command
         $driver->findElement(WebDriverBy::cssSelector('#Company_INN'))->sendKeys($applicant['inn']);
         sleep(1);
 
+        $proceduralStatus = new WebDriverSelect(
+            $driver->findElement(
+                WebDriverBy::xpath('//select[contains(@id, "ProceduralStatus")]')
+            )
+        );
+        $proceduralStatus->selectByVisibleText($applicant['procedural_status']);
+        sleep(3);
+
+        $driver->findElement(WebDriverBy::cssSelector('#Company_OGRN'))->sendKeys($applicant['ogrn']);
+        sleep(1);
+
+        $driver->findElement(WebDriverBy::cssSelector('#Company_KPP'))->sendKeys($applicant['kpp']);
+        sleep(1);
+
         $driver->findElement(WebDriverBy::cssSelector('#Address_Legal_Index'))->sendKeys($applicant['legal_zipcode']);
         sleep(1);
 
@@ -238,7 +257,17 @@ class TestSelenium extends Command
         sleep(1);
 
         $driver->findElement(WebDriverBy::cssSelector('#Address_Physical_Address'))->sendKeys($applicant['location_address']);
-        sleep(1);
+        sleep(2);
+
+        $driver->findElement(
+            WebDriverBy::xpath('//input[contains(@title, "Введите адрес электронной почты представляемого лица")]')
+        )->sendKeys($applicant['email']);
+        sleep(3);
+
+        $driver->findElement(
+            WebDriverBy::xpath('//input[contains(@title, "Введите адрес электронной почты представляемого лица")]')
+        )->sendKeys($applicant['phone']);
+        sleep(3);
 
         $driver->findElement(
             WebDriverBy::xpath('//div[contains(@class, "modal-footer")]/button[contains(text(), "Сохранить")]')

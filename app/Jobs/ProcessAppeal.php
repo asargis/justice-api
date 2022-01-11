@@ -241,38 +241,66 @@ class ProcessAppeal implements ShouldQueue
 
     private function fillApplicantData(RemoteWebDriver $driver, $applicant)
     {
-        $driver->findElement(
-            WebDriverBy::xpath('//button[contains(text(), "Добавить заявителя")]')
-        )->click();
+        try {
+            $driver->findElement(
+                WebDriverBy::xpath('//button[contains(text(), "Добавить заявителя")]')
+            )->click();
 
-        $driver->manage()->timeouts()->implicitlyWait(3);
+            $driver->manage()->timeouts()->implicitlyWait(3);
 
-        $driver->findElement(
-            WebDriverBy::xpath('//button[contains(text(), "Юридическое лицо")]')
-        )->click();
+            $driver->findElement(
+                WebDriverBy::xpath('//button[contains(text(), "Юридическое лицо")]')
+            )->click();
 
 
-        $driver->findElement(WebDriverBy::cssSelector('#Company_Name'))->sendKeys($applicant->name);
-        sleep(1);
+            $driver->findElement(WebDriverBy::cssSelector('#Company_Name'))->sendKeys($applicant->name);
+            sleep(1);
 
-        $driver->findElement(WebDriverBy::cssSelector('#Company_INN'))->sendKeys($applicant->inn);
-        sleep(1);
+            $driver->findElement(WebDriverBy::cssSelector('#Company_INN'))->sendKeys($applicant->inn);
+            sleep(1);
 
-        $driver->findElement(WebDriverBy::cssSelector('#Address_Legal_Index'))->sendKeys($applicant->legal_zipcode);
-        sleep(1);
+            $proceduralStatus = new WebDriverSelect(
+                $driver->findElement(
+                    WebDriverBy::xpath('//select[contains(@id, "ProceduralStatus")]')
+                )
+            );
+            $proceduralStatus->selectByVisibleText($applicant->procedural_status);
+            sleep(3);
 
-        $driver->findElement(WebDriverBy::cssSelector('#Address_Legal_Address'))->sendKeys($applicant->legal_address);
-        sleep(1);
+            $driver->findElement(WebDriverBy::cssSelector('#Company_OGRN'))->sendKeys($applicant->ogrn);
+            sleep(1);
 
-        $driver->findElement(WebDriverBy::cssSelector('#Address_Physical_Index'))->sendKeys($applicant->location_zipcode);
-        sleep(1);
+            $driver->findElement(WebDriverBy::cssSelector('#Company_KPP'))->sendKeys($applicant->kpp);
+            sleep(1);
 
-        $driver->findElement(WebDriverBy::cssSelector('#Address_Physical_Address'))->sendKeys($applicant->location_address);
-        sleep(1);
+            $driver->findElement(WebDriverBy::cssSelector('#Address_Legal_Index'))->sendKeys($applicant->legal_zipcode);
+            sleep(1);
 
-        $driver->findElement(
-            WebDriverBy::xpath('//div[contains(@class, "modal-footer")]/button[contains(text(), "Сохранить")]')
-        )->click();
+            $driver->findElement(WebDriverBy::cssSelector('#Address_Legal_Address'))->sendKeys($applicant->legal_address);
+            sleep(1);
+
+            $driver->findElement(WebDriverBy::cssSelector('#Address_Physical_Index'))->sendKeys($applicant->location_zipcode);
+            sleep(1);
+
+            $driver->findElement(WebDriverBy::cssSelector('#Address_Physical_Address'))->sendKeys($applicant->location_address);
+            sleep(1);
+
+            $driver->findElement(
+                WebDriverBy::xpath('//input[contains(@title, "Введите адрес электронной почты представляемого лица")]')
+            )->sendKeys($applicant->email);
+            sleep(1);
+
+            $driver->findElement(
+                WebDriverBy::xpath('//input[contains(@title, "Введите адрес электронной почты представляемого лица")]')
+            )->sendKeys($applicant->phone);
+            sleep(1);
+
+            $driver->findElement(
+                WebDriverBy::xpath('//div[contains(@class, "modal-footer")]/button[contains(text(), "Сохранить")]')
+            )->click();
+        } catch (\Throwable $exception) {
+            echo $exception->getMessage();
+        }
     }
 
     private function fillProxyDocument(RemoteWebDriver $driver, string $file = '', $pageCount)
@@ -370,7 +398,7 @@ class ProcessAppeal implements ShouldQueue
             )
         );
 
-        $currentCourt->selectByVisibleText($courtJudiciary);
+        $currentCourt->selectByValue($courtJudiciary);
 
         sleep(3);
 

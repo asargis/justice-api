@@ -16,6 +16,9 @@ class Applicant extends Model
         'legal_address',
         'location_zipcode',
         'location_address',
+        'ogrn',
+        'kpp',
+        'procedural_status',
         'email',
         'phone'
     ];

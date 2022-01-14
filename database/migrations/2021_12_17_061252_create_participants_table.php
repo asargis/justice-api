@@ -20,7 +20,7 @@ class CreateParticipantsTable extends Migration
             $table->string('first_name', 255);
             $table->string('middle_name', 255)->nullable();
             $table->string('last_name', 255);
-            $table->date('birthday')->nullable();
+            $table->date('birthdate')->nullable();
             $table->enum('sex', ['male', 'female'])->nullable();
             $table->string('birthplace', 255)->nullable();
             $table->string('registration_zipcode', 6);

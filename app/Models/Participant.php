@@ -23,5 +23,16 @@ class Participant extends Model
         'resident_address',
         'snils',
         'inn',
+        'identity_type',
+        'passport_series',
+        'passport_number',
+        'passport_issued_date',
+        'passport_issued_by',
+        'drivers_license_series',
+        'drivers_license_number',
+        'vehicle_series',
+        'vehicle_number',
+        'email',
+        'phone',
     ];
 }

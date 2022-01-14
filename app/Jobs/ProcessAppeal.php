@@ -61,189 +61,193 @@ class ProcessAppeal implements ShouldQueue
         $driver->manage()->window()->setSize(new WebDriverDimension(1920, 1080));
         $driver->manage()->window()->setPosition(new WebDriverPoint(2, 2));
 
-        //try {
-        $driver->get("https://ej.sudrf.ru/");
+        try {
+            $driver->get("https://ej.sudrf.ru/");
 
-        $driver->manage()->timeouts()->implicitlyWait(5);
+            $driver->manage()->timeouts()->implicitlyWait(5);
 
-        $loginButton = $driver->findElement(
-            WebDriverBy::cssSelector('#login-link a')
-        );
-
-        $loginButton->click();
-
-        sleep(1);
-
-        $iAgreeCheckbox = $driver->findElement(
-            WebDriverBy::cssSelector('#iAgree')
-        );
-        $iAgreeCheckbox->click();
-
-        if ($iAgreeCheckbox->isSelected()) {
-            $esiaLogin = $driver->findElement(
-                WebDriverBy::cssSelector('.esiaLogin')
+            $loginButton = $driver->findElement(
+                WebDriverBy::cssSelector('#login-link a')
             );
 
-            $esiaLogin->click();
-        }
+            $loginButton->click();
 
-        $esiaLoginInput = $driver->findElement(
-            WebDriverBy::cssSelector('#login')
-        );
-
-        $esiaLoginPassword = $driver->findElement(
-            WebDriverBy::cssSelector('#password')
-        );
-
-        $esiaLoginInput->sendKeys(["value" => $this->appeal->esia_login]);
-        $esiaLoginPassword->sendKeys(["value" => $this->appeal->esia_password]);
-
-        $driver->findElement(
-            WebDriverBy::cssSelector('#loginByPwdButton')
-        )->click();
-        sleep(1);
-        try {
-            $driver->findElement(
-                WebDriverBy::xpath('//span[contains(text(), "Частное лицо")]')
-            )->click();
-            sleep(1);
-        } catch (\Throwable $exception) {
-
-        }
-        $navBarMenu = $driver->findElement(
-            WebDriverBy::xpath('//a[contains(@href, "/appeal/")]')
-        );
-
-        $navBarMenu->click();
-        sleep(1);
-
-        if ($this->appeal->type === Appeal::TYPE_ADMINISTRATIVE) {
-            $driver->findElement(
-                WebDriverBy::xpath('//div[contains(@class, "service-appeal")][1]')
-            )->click();
             sleep(1);
 
+            $iAgreeCheckbox = $driver->findElement(
+                WebDriverBy::cssSelector('#iAgree')
+            );
+            $iAgreeCheckbox->click();
+
+            if ($iAgreeCheckbox->isSelected()) {
+                $esiaLogin = $driver->findElement(
+                    WebDriverBy::cssSelector('.esiaLogin')
+                );
+
+                $esiaLogin->click();
+            }
+
+            $esiaLoginInput = $driver->findElement(
+                WebDriverBy::cssSelector('#login')
+            );
+
+            $esiaLoginPassword = $driver->findElement(
+                WebDriverBy::cssSelector('#password')
+            );
+
+            $esiaLoginInput->sendKeys(["value" => $this->appeal->esia_login]);
+            $esiaLoginPassword->sendKeys(["value" => $this->appeal->esia_password]);
+
             $driver->findElement(
-                WebDriverBy::xpath('//a[contains(text(), "Административное исковое заявление")]')
+                WebDriverBy::cssSelector('#loginByPwdButton')
             )->click();
             sleep(1);
+            try {
+                $driver->findElement(
+                    WebDriverBy::xpath('//span[contains(text(), "Частное лицо")]')
+                )->click();
+                sleep(1);
+            } catch (\Throwable $exception) {
+
+            }
+            $navBarMenu = $driver->findElement(
+                WebDriverBy::xpath('//a[contains(@href, "/appeal/")]')
+            );
+
+            $navBarMenu->click();
+            sleep(1);
+
+            if ($this->appeal->type === Appeal::TYPE_ADMINISTRATIVE) {
+                $driver->findElement(
+                    WebDriverBy::xpath('//div[contains(@class, "service-appeal")][1]')
+                )->click();
+                sleep(1);
+
+                $driver->findElement(
+                    WebDriverBy::xpath('//a[contains(text(), "Административное исковое заявление")]')
+                )->click();
+                sleep(1);
 
 //            $surname = $this->findElementSafe($driver,
 //                WebDriverBy::cssSelector('#Surname')
 //            );
-        } else {
-            $driver->findElement(
-                WebDriverBy::xpath('//div[contains(@class, "service-appeal")][2]')
-            )->click();
-            sleep(1);
+            } else {
+                $driver->findElement(
+                    WebDriverBy::xpath('//div[contains(@class, "service-appeal")][2]')
+                )->click();
+                sleep(1);
 
-            $driver->findElement(
-                WebDriverBy::xpath('//a[contains(text(), "Исковое заявление")]')
-            )->click();
-            sleep(1);
+                $driver->findElement(
+                    WebDriverBy::xpath('//a[contains(text(), "Исковое заявление")]')
+                )->click();
+                sleep(1);
 
 //            $surname = $this->findElementSafe($driver,
 //                WebDriverBy::cssSelector('#Surname')
 //            );
-        }
+            }
 
-        $driver->findElement(
-            WebDriverBy::xpath('//button[contains(@name, "Method")][1]')
-        )->click();
+            $driver->findElement(
+                WebDriverBy::xpath('//button[contains(@name, "Method")][1]')
+            )->click();
 
 //        if ($surname === null) {
             $driver->findElement(
                 WebDriverBy::xpath('//button[contains(@name, "Method")][2]')
             )->click();
 //        }
-        sleep(1);
+            sleep(1);
 
-        $driver->findElement(
-            WebDriverBy::cssSelector('#BirthPlace')
-        )->sendKeys($this->appeal->birthplace);
-        sleep(5);
+            $this->deleteUploadedFiles($driver);
+            sleep(2);
 
-
-        // Документ, подтверждающий полномочия
-        $proxyDocument = $this->appeal
-            ->documents()
-            ->where(['type' => Document::TYPE_PROXY])
-            ->where(['appeal_id' => $this->appeal->id])
-            ->first();
-
-        $this->fillProxyDocument($driver, storage_path('proxy') . '/' . $proxyDocument->path, $proxyDocument->page_count);
-        sleep(2);
-
-        $this->fillApplicantData($driver, $this->appeal->applicant()->first());
-
-        // Добавить участников
-        $this->fillParticipantsData($driver, $this->appeal->participants()->get());
-
-        sleep(3);
-
-        // Заполнить данные суда
-        $this->fillCourtData($driver, $this->appeal->court_region, $this->appeal->court_judiciary);
-
-        // Добавить файл "Суть заявления"
-        $essenceFile = $this->appeal
-            ->documents()
-            ->where(['type' => Document::TYPE_ESSENCE])
-            ->where(['appeal_id' => $this->appeal->id])
-            ->first();
-        $this->fillEssenceDocument($driver, storage_path('essence') . '/' . $essenceFile->path, $essenceFile->page_count);
-
-        // Добавить файлы "Приложения к заявлению"
-        $attachments = $this->appeal
-            ->documents()
-            ->where(['type' => Document::TYPE_ATTACHMENT])
-            ->where(['appeal_id' => $this->appeal->id]);
-
-        $this->fillAttachmentDocuments($driver, $attachments);
-
-        sleep(5);
-
-        //Поставить галочку "Квитанция об уплате государственной пошлины"
-        $driver->findElement(
-            WebDriverBy::cssSelector('#Tax_Free')
-        )->click();
-
-        // Добавить файл квитанции об уплате гос. пошлины
-        $paymentDocument = $this->appeal
-            ->documents()
-            ->where(['type' => Document::TYPE_PAYMENT])
-            ->where(['appeal_id' => $this->appeal->id])
-            ->first();
-        $this->fillPaymentDocument($driver, storage_path('payment') . '/' . $paymentDocument->path, $paymentDocument->page_count);
-
-        sleep(3);
-
-        // Сохранить заявление
-        $driver->findElement(
-            WebDriverBy::xpath('//button[contains(@title, "Сформируйте и отправьте обращение в суд")]')
-        )->click();
-        sleep(3);
-
-        // Отправить заявление
-        $driver->findElement(
-            WebDriverBy::xpath('//button[contains(text(), "Отправить")]')
-        )->click();
+            $driver->findElement(
+                WebDriverBy::cssSelector('#BirthPlace')
+            )->sendKeys($this->appeal->birthplace);
+            sleep(5);
 
 
-        $appealId = $driver->findElement(
-            WebDriverBy::xpath('//label[contains(text(), "Номер")]/following::div[1]/div')
-        )->getText();
+            // Документ, подтверждающий полномочия
+            $proxyDocument = $this->appeal
+                ->documents()
+                ->where(['type' => Document::TYPE_PROXY])
+                ->where(['appeal_id' => $this->appeal->id])
+                ->first();
 
-        $this->appeal->status = Appeal::STATUS_PROCESSED;
-        $this->appeal->external_id = $appealId;
-        $this->appeal->save();
+            $this->fillProxyDocument($driver, storage_path('proxy') . '/' . $proxyDocument->path, $proxyDocument->page_count);
+            sleep(2);
 
-        $driver->quit();
-//        } catch (\Throwable $exception) {
+            $this->fillApplicantData($driver, $this->appeal->applicant()->first());
+
+            // Добавить участников
+            $this->fillParticipantsData($driver, $this->appeal->participants()->get());
+
+            sleep(3);
+
+            // Заполнить данные суда
+            $this->fillCourtData($driver, $this->appeal->court_region, $this->appeal->court_judiciary);
+
+            // Добавить файл "Суть заявления"
+            $essenceFile = $this->appeal
+                ->documents()
+                ->where(['type' => Document::TYPE_ESSENCE])
+                ->where(['appeal_id' => $this->appeal->id])
+                ->first();
+            $this->fillEssenceDocument($driver, storage_path('essence') . '/' . $essenceFile->path, $essenceFile->page_count);
+
+            // Добавить файлы "Приложения к заявлению"
+            $attachments = $this->appeal
+                ->documents()
+                ->where(['type' => Document::TYPE_ATTACHMENT])
+                ->where(['appeal_id' => $this->appeal->id]);
+
+            $this->fillAttachmentDocuments($driver, $attachments);
+
+            sleep(5);
+
+            //Поставить галочку "Квитанция об уплате государственной пошлины"
+            $driver->findElement(
+                WebDriverBy::cssSelector('#Tax_Free')
+            )->click();
+
+            // Добавить файл квитанции об уплате гос. пошлины
+            $paymentDocument = $this->appeal
+                ->documents()
+                ->where(['type' => Document::TYPE_PAYMENT])
+                ->where(['appeal_id' => $this->appeal->id])
+                ->first();
+            $this->fillPaymentDocument($driver, storage_path('payment') . '/' . $paymentDocument->path, $paymentDocument->page_count);
+
+            sleep(3);
+
+            // Сохранить заявление
+            $driver->findElement(
+                WebDriverBy::xpath('//button[contains(@title, "Сформируйте и отправьте обращение в суд")]')
+            )->click();
+            sleep(3);
+
+            // Отправить заявление
+            $driver->findElement(
+                WebDriverBy::xpath('//button[contains(text(), "Отправить")]')
+            )->click();
+
+
+            $appealId = $driver->findElement(
+                WebDriverBy::xpath('//label[contains(text(), "Номер")]/following::div[1]/div')
+            )->getText();
+
+            $this->appeal->status = Appeal::STATUS_PROCESSED;
+            $this->appeal->external_id = $appealId;
+            $this->appeal->save();
+
+            $driver->quit();
+        } catch (\Throwable $exception) {
+            echo $exception->getMessage();
 //            $this->appeal->status = Appeal::STATUS_FAILED;
 //            $this->appeal->save();
 //            $this->release(10);
 //            $driver->quit();
-//        }
+        }
     }
 
 
@@ -429,6 +433,16 @@ class ProcessAppeal implements ShouldQueue
             )->click();
             sleep(1);
 
+
+            $proceduralStatus = new WebDriverSelect(
+                $driver->findElement(
+                    WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/select[contains(@id, "ProceduralStatus")]')
+                )
+            );
+            $proceduralStatus->selectByVisibleText($participant->procedural_status);
+            sleep(3);
+
+
             $driver->findElement(
                 WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/input[contains(@id, "Surname")]')
             )->sendKeys($participant->last_name);
@@ -440,6 +454,32 @@ class ProcessAppeal implements ShouldQueue
             )->sendKeys($participant->first_name);
 
             sleep(1);
+
+            $driver->findElement(
+                WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/input[contains(@id, "Patronymic")]')
+            )->sendKeys($participant->middle_name);
+
+
+            $driver->findElement(
+                WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/input[contains(@id, "BirthDate")]')
+            )->sendKeys($participant->birthdate);
+
+
+            if ($participant->sex === 'male') {
+                // Если пол мужской
+                $driver->findElement(
+                    WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/div/button[1]')
+                )->click();
+            } else {
+                // Если пол женский
+                $driver->findElement(
+                    WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/div/button[2]')
+                )->click();
+            }
+
+            $driver->findElement(
+                WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/input[contains(@id, "BirthPlace")]')
+            )->sendKeys($participant->birthplace);
 
             $driver->findElement(
                 WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/input[contains(@id, "Address_Permanent_Index")]')
@@ -477,6 +517,74 @@ class ProcessAppeal implements ShouldQueue
 
             sleep(1);
 
+            // Тип паспорта(РФ или иностранный)
+            $identityType = new WebDriverSelect(
+                $driver->findElement(
+                    WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/select[contains(@id, "Passport_Type")]')
+                )
+            );
+            $identityType->selectByVisibleText($participant->identity_type);
+            sleep(1);
+
+
+            $driver->findElement(
+                WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/input[contains(@id, "Passport_Series")]')
+            )->sendKeys($participant->passport_series);
+            sleep(1);
+
+            $driver->findElement(
+                WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/input[contains(@id, "Passport_Number")]')
+            )->sendKeys($participant->passport_number);
+            sleep(1);
+
+            $driver->findElement(
+                WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/input[contains(@id, "Passport_IssueDate")]')
+            )->sendKeys($participant->passport_issued_date);
+
+            sleep(1);
+
+            $driver->findElement(
+                WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/input[contains(@id, "Passport_IssuedBy")]')
+            )->sendKeys($participant->passport_issued_by);
+            sleep(1);
+
+
+            $driver->findElement(
+                WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/input[contains(@id, "Driving_License_Series")]')
+            )->sendKeys($participant->drivers_license_series);
+
+            sleep(1);
+
+            $driver->findElement(
+                WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/input[contains(@id, "Driving_License_Number")]')
+            )->sendKeys($participant->drivers_license_number);
+
+            sleep(1);
+
+            $driver->findElement(
+                WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/input[contains(@id, "SRTS_Series")]')
+            )->sendKeys($participant->vehicle_series);
+
+            sleep(1);
+
+            $driver->findElement(
+                WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/input[contains(@id, "SRTS_Number")]')
+            )->sendKeys($participant->vehicle_number);
+
+            sleep(1);
+
+
+            $driver->findElement(
+                WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/input[contains(@id, "Email")]')
+            )->sendKeys($participant->email);
+
+            sleep(1);
+
+            $driver->findElement(
+                WebDriverBy::xpath('//div[contains(@class, "modal-body")]/div/div/form/div/div/div/div/input[contains(@id, "Phone")]')
+            )->sendKeys($participant->phone);
+
+            sleep(1);
 
             $driver->findElement(
                 WebDriverBy::xpath('//div[contains(@class, "modal-footer")]/button[contains(text(), "Сохранить")]')
@@ -561,6 +669,17 @@ class ProcessAppeal implements ShouldQueue
             $driver->findElement(
                 WebDriverBy::xpath('//div[contains(@class, "modal-footer")]/button[contains(text(), "Добавить")]')
             )->click();
+        }
+    }
+
+    private function deleteUploadedFiles(RemoteWebDriver $driver)
+    {
+        $files = $driver->findElements(
+            WebDriverBy::xpath('//a[contains(text(), "Удалить файл")]')
+        );
+
+        foreach ($files as $file) {
+            $file->click();
         }
     }
 
